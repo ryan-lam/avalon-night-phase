@@ -9,8 +9,18 @@ class Servant extends RoleBase {
 
 class UntrustworthyServant extends Servant {
     constructor() { super('Untrustworthy Servant', 'Good'); this.name = 'Untrustworthy Servant'; }
-    // Behaves like Servant (sees nothing).
-    // Special logic: Appears as Evil to Merlin (handled in Merlin's logic).
+
+    getKnowledge(gameState, selfPlayer) {
+        // Reveal 1 specific Evil player as configured by Host
+        const targetRoleName = gameState.config && gameState.config.untrustworthySeeRole;
+        if (!targetRoleName) return { role: this.name, alignment: this.alignment, info: [] };
+
+        const seen = Object.values(gameState.players)
+            .filter(p => p.role && p.role.name === targetRoleName)
+            .map(p => ({ idx: p.idx, name: p.name, role: 'Evil' }));
+
+        return { role: this.name, alignment: this.alignment, info: seen };
+    }
 }
 
 class Merlin extends RoleBase {
@@ -32,6 +42,17 @@ class Merlin extends RoleBase {
                 return p.role.alignment === 'Evil';
             })
             .map(p => ({ idx: p.idx, name: p.name, role: 'Evil' }));
+
+        // Check for Untrustworthy Servant and add a warning message
+        const hasUntrustworthy = Object.values(gameState.players).some(p => p.role && p.role.name === 'Untrustworthy Servant');
+
+        // We'll append a special info item that the frontend handles (or just displays in list)
+        // Alternatively, we can pass it as a separate property, but `info` is what's displayed.
+        // Let's force it as a special item.
+        if (hasUntrustworthy) {
+            seen.push({ idx: -1, name: "WARNING", role: "One of the Evils is Untrustworthy Servant!" });
+        }
+
         return { role: this.name, alignment: this.alignment, info: seen };
     }
 }

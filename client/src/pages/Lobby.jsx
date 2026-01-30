@@ -65,6 +65,20 @@ export default function Lobby({ lobbyState, isHost }) {
             alert(`Role count (${totalRoles}) must match player count (${playerCount})`);
             return;
         }
+
+        // Validation for Untrustworthy Servant
+        if (selectedRoles.includes('Untrustworthy Servant')) {
+            const targetRole = lobbyState.config?.untrustworthySeeRole;
+            if (!targetRole) {
+                alert("Please select which Evil role the Untrustworthy Servant should see.");
+                return;
+            }
+            if (!selectedRoles.includes(targetRole)) {
+                alert(`The selected target for Untrustworthy Servant (${targetRole}) is no longer in the game. Please select a valid Evil role.`);
+                return;
+            }
+        }
+
         // We send just the unique roles; server adds generics based on counts in config (or we send here)
         // Actually server implementation creates list from passed roles + counts. 
         // Wait, server `startGame` receives `roles`. If I look at server/index.js: `gameManager.startGame(code, roles);`
@@ -173,6 +187,33 @@ export default function Lobby({ lobbyState, isHost }) {
                     <div className="flex flex-wrap gap-2 mb-4">
                         {availableRoles.Good?.map(r => <RoleButton key={r.name} role={r.name} />)}
                     </div>
+
+                    {/* Untrustworthy Servant Configuration */}
+                    {isHost && selectedRoles.includes('Untrustworthy Servant') && (
+                        <div className="mb-4 bg-black/20 p-3 rounded-lg border border-red-900/30">
+                            <label className="block text-xs font-bold text-red-300 uppercase mb-2">
+                                Reveal which Evil role to Untrustworthy Servant?
+                            </label>
+                            <select
+                                className="w-full bg-gray-800 text-white rounded p-2 text-sm border border-gray-600 focus:border-avalon-gold outline-none"
+                                value={lobbyState.config?.untrustworthySeeRole || ""}
+                                onChange={(e) => {
+                                    const newConfig = { ...lobbyState.config, untrustworthySeeRole: e.target.value };
+                                    socket.emit('update-lobby-settings', { code: lobbyState.code, config: newConfig });
+                                }}
+                            >
+                                <option value="" disabled>Select an Evil Role</option>
+                                {/* Filter selectedRoles to find which ones are Evil */}
+                                {selectedRoles.filter(roleName => {
+                                    // Hacky check: is it in availableRoles.Evil?
+                                    const roleObj = availableRoles.Evil?.find(r => r.name === roleName);
+                                    return !!roleObj;
+                                }).map(roleName => (
+                                    <option key={roleName} value={roleName}>{roleName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Servant Counter */}
                     <div className="flex items-center justify-between bg-black/20 p-3 rounded-lg">

@@ -193,7 +193,12 @@ class GameManager {
         const player = lobby.players.find(p => p.socketId === socketId);
         if (!player || !player.role) return null;
 
-        return player.role.getKnowledge(lobby, player);
+        const knowledge = player.role.getKnowledge(lobby, player);
+        if (knowledge && knowledge.info && Array.isArray(knowledge.info)) {
+            // Shuffle the info array to prevent pattern recognition
+            this.shuffleArray(knowledge.info);
+        }
+        return knowledge;
     }
 
     confirmPlayer(code, socketId) {
