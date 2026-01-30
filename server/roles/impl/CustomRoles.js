@@ -37,11 +37,8 @@ class Cleric extends RoleBase {
 class JrMessenger extends RoleBase {
     constructor() { super('Jr Messenger', 'Good', true); }
     getKnowledge(gameState, selfPlayer) {
-        // Sees Sr Messenger
-        const seen = Object.values(gameState.players)
-            .filter(p => p.role && p.role.name === 'Sr Messenger')
-            .map(p => ({ idx: p.idx, name: p.name, role: 'Sr Messenger' }));
-        return { role: this.name, alignment: this.alignment, info: seen };
+        // Jr Messenger sees nothing specific (only known by Sr Messenger)
+        return { role: this.name, alignment: this.alignment, info: [] };
     }
 }
 
