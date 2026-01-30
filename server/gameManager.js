@@ -102,10 +102,8 @@ class GameManager {
             throw new Error(`Player count (${lobby.players.length}) does not match role count (${rolesList.length})`);
         }
 
-        // 1. Shuffle players (to randomize Leader order)
-        // Wait, normally people sit in a circle. We should probably NOT shuffle indices if they joined in order?
-        // Actually, usually online you randomize the seating order or you randomize the roles.
-        // Let's randomize the ROLES assigned to the players.
+        // 1. Shuffle players and/or roles
+        // We randomize the assignment of roles to players.
 
         // Create full list including generics
         let allRoles = [...rolesList];
@@ -117,10 +115,6 @@ class GameManager {
             for (let i = 0; i < (config.genericCounts['Servant'] || 0); i++) allRoles.push('Servant');
         }
 
-        // Validate count
-        // Note: rolesList passed here might be just the unique roles if we change frontend logic. 
-        // But let's assume valid total count check needs to happen.
-
         if (allRoles.length !== lobby.players.length) {
             throw new Error(`Player count (${lobby.players.length}) does not match role count (${allRoles.length})`);
         }
@@ -129,16 +123,43 @@ class GameManager {
         const shuffledRoles = this.shuffleArray([...allRoles]);
 
         // Assign roles
+        let clericExists = false;
         lobby.players.forEach((p, i) => {
             const roleName = shuffledRoles[i];
             const roleInstance = roleRegistry.getRole(roleName);
             p.role = roleInstance;
             p.confirmed = false; // Reset confirmed status
+            if (roleName === 'Cleric') clericExists = true;
         });
 
-        lobby.state = 'night_phase';
+        // Use new Leader Selection phase if Cleric exists
+        if (clericExists) {
+            lobby.state = 'leader_selection';
+
+            // Randomly pick Leader 1
+            const randomIdx = Math.floor(Math.random() * lobby.players.length);
+            lobby.leader1 = lobby.players[randomIdx].socketId; // Store socketId
+            lobby.leader2 = null;
+        } else {
+            lobby.state = 'night_phase';
+        }
+
         lobby.readyPlayers.clear();
 
+        return lobby;
+    }
+
+    setSecondLeader(code, leader2Id) {
+        const lobby = this.lobbies[code];
+        if (!lobby) throw new Error('Lobby not found');
+
+        // Validation: ensures leader2 != leader1 handled by frontend/logic?
+        if (lobby.leader1 === leader2Id) {
+            throw new Error("Leader 2 cannot be the same as Leader 1");
+        }
+
+        lobby.leader2 = leader2Id;
+        lobby.state = 'night_phase';
         return lobby;
     }
 
@@ -148,7 +169,7 @@ class GameManager {
         const player = lobby.players.find(p => p.socketId === socketId);
         if (!player || !player.role) return null;
 
-        return player.role.getKnowledge({ players: lobby.players }, player);
+        return player.role.getKnowledge(lobby, player);
     }
 
     confirmPlayer(code, socketId) {

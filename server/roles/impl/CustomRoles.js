@@ -4,18 +4,30 @@ class Cleric extends RoleBase {
     constructor() { super('Cleric', 'Good', true); }
     getKnowledge(gameState, selfPlayer) {
         // Logic: 
-        // Default: See alignment of First Leader (Player at index 0).
-        // Custom: If Cleric is First Leader (index 0), see alignment of Player at index 1.
+        // 1. Identify Leader 1 and Leader 2 from gameState (lobby)
+        // 2. If Cleric is Leader 1, check Leader 2's alignment.
+        // 3. If Cleric is NOT Leader 1, check Leader 1's alignment.
 
-        const players = Object.values(gameState.players).sort((a, b) => a.idx - b.idx);
-        if (players.length < 2) return { role: this.name, alignment: this.alignment, info: [] };
+        // Note: gameState has 'players' array. Leader IDs are in gameState (the lobby object passed in)
+        // Wait, the caller is `gameManager.getPlayerKnowledge(code, socketId)`.
+        // It passes `lobby.players` wrapped in object: `{ players: lobby.players }`.
+        // I need to change the caller to pass the whole lobby or pass leaders.
+        // Let's assume I fix the caller to pass the full lobby as gameState.
 
-        let targetIdx = 0;
-        if (selfPlayer.idx === 0) {
-            targetIdx = 1;
+        const leader1Id = gameState.leader1;
+        const leader2Id = gameState.leader2;
+
+        if (!leader1Id || !leader2Id) return { role: this.name, alignment: this.alignment, info: [] };
+
+        let targetId = leader1Id;
+        if (selfPlayer.socketId === leader1Id) {
+            targetId = leader2Id;
         }
 
-        const target = players[targetIdx];
+        const target = Object.values(gameState.players).find(p => p.socketId === targetId);
+
+        if (!target) return { role: this.name, alignment: this.alignment, info: [] };
+
         const info = [{ idx: target.idx, name: target.name, role: target.role.alignment }];
 
         return { role: this.name, alignment: this.alignment, info: info };

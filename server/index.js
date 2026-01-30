@@ -68,6 +68,22 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('set-second-leader', ({ code, leader2Id }) => {
+        try {
+            const lobby = gameManager.setSecondLeader(code, leader2Id);
+
+            // Now start the actual night phase - send private knowledge
+            lobby.players.forEach(p => {
+                const knowledge = gameManager.getPlayerKnowledge(code, p.socketId);
+                io.to(p.socketId).emit('game-started', knowledge);
+            });
+
+            io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+        } catch (e) {
+            console.error("Error setting second leader", e);
+        }
+    });
+
     socket.on('start-game', ({ code, roles }, callback) => {
         try {
             const lobby = gameManager.startGame(code, roles);
@@ -138,7 +154,8 @@ function sanitizeLobby(lobby) {
             confirmed: p.confirmed,
             // DO NOT SEND ROLE HERE
         })),
-        config: lobby.config // Send config to everyone
+        config: lobby.config, // Send config to everyone
+        leader1: lobby.leader1 // Send leader1 ID so clients know who it is
     };
 }
 

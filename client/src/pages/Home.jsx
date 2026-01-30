@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { socket } from '../socket';
 
-export default function Home({ setGameState, setPlayerInfo }) {
+export default function Home({ setPlayerInfo }) {
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
     const [error, setError] = useState('');

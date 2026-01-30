@@ -3,6 +3,7 @@ import { socket } from './socket';
 import Home from './pages/Home';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
+import LeaderSelection from './pages/LeaderSelection';
 
 function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -79,11 +80,13 @@ function App() {
   }, []);
 
   // View Routing Logic
-  let view = <Home setGameState={setLobbyState} setPlayerInfo={setPlayerInfo} />;
+  let view = <Home setPlayerInfo={setPlayerInfo} />;
 
   if (lobbyState) {
     if (lobbyState.state === 'waiting') {
       view = <Lobby lobbyState={lobbyState} isHost={playerInfo?.isHost} />;
+    } else if (lobbyState.state === 'leader_selection') {
+      view = <LeaderSelection lobbyState={lobbyState} playerInfo={playerInfo} />;
     } else if (lobbyState.state === 'night_phase') {
       view = <Game lobbyState={lobbyState} knowledge={knowledge} />;
     }
