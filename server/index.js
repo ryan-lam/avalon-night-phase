@@ -1,0 +1,123 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const gameManager = require('./gameManager');
+const roleRegistry = require('./roles/RoleRegistry');
+
+const app = express();
+app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Allow all for dev
+        methods: ["GET", "POST"]
+    }
+});
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    // --- Role List Request ---
+    socket.on('get-roles', (callback) => {
+        callback(roleRegistry.getAllRoles());
+    });
+
+    // --- Lobby Actions ---
+    socket.on('create-lobby', ({ playerName }, callback) => {
+        console.log(`Received create-lobby request from ${socket.id} (${playerName})`);
+        try {
+            const code = gameManager.createLobby(socket.id, playerName);
+            console.log(`Lobby created: ${code}`);
+            socket.join(code);
+
+            // Fix: Emit lobby update so client switches view
+            const lobby = gameManager.lobbies[code];
+            io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+
+            callback({ success: true, code });
+        } catch (e) {
+            console.error('Error creating lobby:', e);
+            callback({ success: false, error: e.message });
+        }
+    });
+
+    socket.on('join-lobby', ({ code, playerName }, callback) => {
+        try {
+            const lobby = gameManager.joinLobby(code.toUpperCase(), socket.id, playerName);
+            socket.join(lobby.code);
+            io.to(lobby.code).emit('lobby-update', sanitizeLobby(lobby));
+            callback({ success: true, lobby: sanitizeLobby(lobby) });
+        } catch (e) {
+            callback({ success: false, error: e.message });
+        }
+    });
+
+    socket.on('update-lobby-settings', ({ code, config }) => {
+        const lobby = gameManager.updateLobbyConfig(code, config);
+        if (lobby) {
+            io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+        }
+    });
+
+    socket.on('start-game', ({ code, roles }, callback) => {
+        try {
+            const lobby = gameManager.startGame(code, roles);
+
+            // Send individual knowledge to each player
+            lobby.players.forEach(p => {
+                const knowledge = gameManager.getPlayerKnowledge(code, p.socketId);
+                io.to(p.socketId).emit('game-started', knowledge);
+            });
+
+            io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+        } catch (e) {
+            if (callback) callback({ success: false, error: e.message });
+        }
+    });
+
+    socket.on('confirm-role', ({ code }) => {
+        const lobby = gameManager.confirmPlayer(code, socket.id);
+        if (lobby) {
+            io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+        }
+    });
+
+    socket.on('reset-game', ({ code }) => {
+        const lobby = gameManager.resetGame(code);
+        if (lobby) {
+            io.to(code).emit('game-reset');
+            io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+        }
+    });
+
+    socket.on('disconnect', () => {
+        const result = gameManager.removePlayer(socket.id);
+        if (result) {
+            io.to(result.code).emit('lobby-update', sanitizeLobby(result.lobby));
+        }
+    });
+});
+
+function sanitizeLobby(lobby) {
+    // Remove secret info from public lobby state
+    return {
+        code: lobby.code,
+        hostId: lobby.hostId,
+        state: lobby.state,
+        players: lobby.players.map(p => ({
+            name: p.name,
+            socketId: p.socketId,
+            isHost: p.isHost,
+            confirmed: p.confirmed,
+            // DO NOT SEND ROLE HERE
+        })),
+        config: lobby.config // Send config to everyone
+    };
+}
+
+const PORT = 3001;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

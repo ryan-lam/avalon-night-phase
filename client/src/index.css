@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-avalon-dark text-white font-sans;
+  }
+}
+
+.btn-primary {
+  @apply px-6 py-3 rounded-lg font-bold text-white transition-all transform active:scale-95 shadow-lg;
+  background: linear-gradient(135deg, #c3a13c 0%, #a08020 100%);
+}
+
+.btn-danger {
+  @apply px-6 py-3 rounded-lg font-bold text-white transition-all transform active:scale-95 shadow-lg;
+  background: linear-gradient(135deg, #950740 0%, #6f0028 100%);
+}
+
+.card {
+  @apply bg-avalon-gray bg-opacity-30 backdrop-blur-md rounded-xl p-6 border border-white/10 shadow-xl;
+}
+
+.input-field {
+  @apply w-full bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-avalon-gold transition-colors;
+}
