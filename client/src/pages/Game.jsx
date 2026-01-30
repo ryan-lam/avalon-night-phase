@@ -1,14 +1,18 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { socket } from '../socket';
-import { Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { EyeOff, CheckCircle } from 'lucide-react';
 
 export default function Game({ lobbyState, knowledge }) {
     const [revealed, setRevealed] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
+    const [hasPeeked, setHasPeeked] = useState(false);
 
     // Hold to reveal logic
     const handleTouchStart = () => {
-        if (!confirmed) setRevealed(true);
+        if (!confirmed) {
+            setRevealed(true);
+            setHasPeeked(true);
+        }
     };
 
     const handleTouchEnd = () => {
@@ -126,8 +130,11 @@ export default function Game({ lobbyState, knowledge }) {
 
                     <button
                         onClick={confirmRead}
-                        disabled={!revealed && !confirmed} // Ideally force them to reveal at least once? Or just let them confirm.
-                        className="btn-primary w-full"
+                        disabled={!hasPeeked || confirmed}
+                        className={`w-full py-4 rounded-lg font-bold text-white shadow-lg transition-all ${!hasPeeked || confirmed
+                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transform active:scale-95'
+                            }`}
                     >
                         CONFIRM & HIDE
                     </button>

@@ -82,8 +82,8 @@ export default function Lobby({ lobbyState, isHost }) {
             onClick={() => toggleRole(role)}
             disabled={!isHost}
             className={`px-3 py-2 text-sm rounded transition-colors border flex-1 text-center whitespace-nowrap ${selectedRoles.includes(role)
-                    ? 'bg-avalon-gold text-white border-avalon-gold shadow-md'
-                    : 'border-gray-600 text-gray-400 hover:border-gray-400'
+                ? 'bg-avalon-gold text-white border-avalon-gold shadow-md'
+                : 'border-gray-600 text-gray-400 hover:border-gray-400'
                 } ${!isHost && !selectedRoles.includes(role) ? 'opacity-50' : ''}`}
         >
             {role}
@@ -91,7 +91,7 @@ export default function Lobby({ lobbyState, isHost }) {
     );
 
     return (
-        <div className="flex flex-col min-h-screen px-4 py-8 max-w-lg mx-auto pb-24">
+        <div className="flex flex-col min-h-screen px-4 py-8 max-w-lg mx-auto">
             {/* Header */}
             <div className="text-center mb-8">
                 <h2 className="text-gray-400 text-sm tracking-widest uppercase mb-2">LOBBY CODE</h2>
@@ -156,12 +156,12 @@ export default function Lobby({ lobbyState, isHost }) {
             </div>
 
             {/* Footer Info & Actions */}
-            <div className="mt-8 text-center bg-black/40 p-3 rounded-lg backdrop-blur-sm fixed bottom-4 left-4 right-4 max-w-lg mx-auto border border-white/10 shadow-2xl z-10">
+            <div className="mt-8 text-center bg-black/40 p-3 rounded-lg backdrop-blur-sm w-full border border-white/10 shadow-2xl">
                 <div className="flex justify-between items-center mb-3 px-2">
                     <span className="text-sm text-gray-400">Total Roles:</span>
                     <span className={`text-xl font-bold ${(selectedRoles.length + genericCounts['Minion'] + genericCounts['Servant']) === (lobbyState.players?.length || 0)
-                            ? 'text-green-400'
-                            : 'text-red-400'
+                        ? 'text-green-400'
+                        : 'text-red-400'
                         }`}>
                         {selectedRoles.length + genericCounts['Minion'] + genericCounts['Servant']} / {lobbyState.players?.length || 0}
                     </span>
