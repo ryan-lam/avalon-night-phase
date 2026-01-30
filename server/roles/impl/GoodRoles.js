@@ -46,7 +46,7 @@ class Percival extends RoleBase {
                 // Percival sees Merlin and Morgana as "Merlin"
                 return p.role.name === 'Merlin' || p.role.name === 'Morgana';
             })
-            .map(p => ({ idx: p.idx, name: p.name, role: 'Merlin' }));
+            .map(p => ({ idx: p.idx, name: p.name, role: 'Merlin / Morgana' }));
         return { role: this.name, alignment: this.alignment, info: seen };
     }
 }
