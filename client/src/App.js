@@ -60,6 +60,7 @@ function App() {
       setKnowledge(null);
       localStorage.removeItem('avalon_session');
       alert("You have been kicked from the lobby.");
+      window.location.reload(); // Force reload to clear all state and return to Home
     }
 
     socket.on('connect', onConnect);

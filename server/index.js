@@ -133,8 +133,13 @@ io.on('connection', (socket) => {
             if (result) {
                 // Notify the kicked player
                 io.to(targetId).emit('kicked');
-                // Make sure they leave the socket room
-                io.in(targetId).socketsLeave(code);
+
+                // Force disconnect the socket
+                const targetSocket = io.sockets.sockets.get(targetId);
+                if (targetSocket) {
+                    targetSocket.leave(code); // Leave room just in case
+                    targetSocket.disconnect(true);
+                }
 
                 // Update everyone else
                 io.to(code).emit('lobby-update', sanitizeLobby(result.lobby));

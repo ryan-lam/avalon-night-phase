@@ -52,6 +52,12 @@ class GameManager {
         if (existingPlayer) {
             existingPlayer.socketId = socketId;
             existingPlayer.connected = true;
+
+            // Fix: If this player is the host, update the lobby's hostId
+            if (existingPlayer.isHost) {
+                lobby.hostId = socketId;
+            }
+
             return lobby;
         }
 
