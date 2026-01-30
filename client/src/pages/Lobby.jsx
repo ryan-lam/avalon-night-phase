@@ -108,9 +108,22 @@ export default function Lobby({ lobbyState, isHost }) {
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
                     {lobbyState.players?.map((p) => (
-                        <div key={p.socketId} className="flex items-center p-2 rounded bg-white/5 border border-white/5">
-                            {p.isHost && <Crown className="w-3 h-3 text-avalon-gold mr-2" />}
-                            <span className="font-medium text-sm truncate">{p.name}</span>
+                        <div key={p.socketId} className="flex items-center justify-between p-2 rounded bg-white/5 border border-white/5">
+                            <div className="flex items-center">
+                                {p.isHost && <Crown className="w-3 h-3 text-avalon-gold mr-2" />}
+                                <span className={`font-medium text-sm truncate ${!p.connected ? 'text-gray-500 italic' : ''}`}>
+                                    {p.name} {!p.connected && '(DC)'}
+                                </span>
+                            </div>
+                            {isHost && !p.isHost && (
+                                <button
+                                    onClick={() => socket.emit('kick-player', { code: lobbyState.code, targetId: p.socketId })}
+                                    className="text-red-500 hover:text-red-400 p-1"
+                                    title="Kick Player"
+                                >
+                                    <Minus className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>

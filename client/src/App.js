@@ -13,6 +13,28 @@ function App() {
   useEffect(() => {
     function onConnect() {
       setIsConnected(true);
+      // Auto-rejoin attempt
+      const session = localStorage.getItem('avalon_session');
+      if (session) {
+        try {
+          const { name, code, isHost } = JSON.parse(session);
+          socket.emit('join-lobby', { code, playerName: name }, (res) => {
+            if (res.success) {
+              setPlayerInfo({ name, isHost, socketId: socket.id });
+              // If game already started, we might need to request game state explicitly? 
+              // actually join-lobby returns 'lobby' and triggers 'lobby-update'. 
+              // But if game started, we also need 'game-started' event for knowledge.
+              if (res.lobby.state === 'night_phase') {
+                // We rely on server sending knowledge, but join-lobby currently doesn't trigger knowledge send. 
+                // It only emits lobby-update. 
+                // Let's rely on server sending game-started if we rejoin a running game.
+              }
+            }
+          });
+        } catch (e) {
+          console.error("Rejoin failed", e);
+        }
+      }
     }
     function onDisconnect() {
       setIsConnected(false);
@@ -31,11 +53,20 @@ function App() {
       setKnowledge(null);
     }
 
+    function onKicked() {
+      setLobbyState(null);
+      setPlayerInfo(null);
+      setKnowledge(null);
+      localStorage.removeItem('avalon_session');
+      alert("You have been kicked from the lobby.");
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('lobby-update', onLobbyUpdate);
     socket.on('game-started', onGameStarted);
     socket.on('game-reset', onGameReset);
+    socket.on('kicked', onKicked);
 
     return () => {
       socket.off('connect', onConnect);
@@ -43,6 +74,7 @@ function App() {
       socket.off('lobby-update', onLobbyUpdate);
       socket.off('game-started', onGameStarted);
       socket.off('game-reset', onGameReset);
+      socket.off('kicked', onKicked);
     };
   }, []);
 

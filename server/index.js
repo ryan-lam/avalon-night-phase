@@ -48,6 +48,13 @@ io.on('connection', (socket) => {
             const lobby = gameManager.joinLobby(code.toUpperCase(), socket.id, playerName);
             socket.join(lobby.code);
             io.to(lobby.code).emit('lobby-update', sanitizeLobby(lobby));
+
+            // If game is in progress, send private knowledge to the rejoining player
+            if (lobby.state === 'night_phase') {
+                const knowledge = gameManager.getPlayerKnowledge(lobby.code, socket.id);
+                socket.emit('game-started', knowledge);
+            }
+
             callback({ success: true, lobby: sanitizeLobby(lobby) });
         } catch (e) {
             callback({ success: false, error: e.message });
@@ -92,8 +99,26 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('kick-player', ({ code, targetId }) => {
+        // Validation: verify requester is host? 
+        // Ideally we check if socket.id is the host of the lobby 'code'
+        const lobby = gameManager.lobbies[code];
+        if (lobby && lobby.hostId === socket.id) {
+            const result = gameManager.kickPlayer(code, targetId);
+            if (result) {
+                // Notify the kicked player
+                io.to(targetId).emit('kicked');
+                // Make sure they leave the socket room
+                io.in(targetId).socketsLeave(code);
+
+                // Update everyone else
+                io.to(code).emit('lobby-update', sanitizeLobby(result.lobby));
+            }
+        }
+    });
+
     socket.on('disconnect', () => {
-        const result = gameManager.removePlayer(socket.id);
+        const result = gameManager.disconnectPlayer(socket.id);
         if (result) {
             io.to(result.code).emit('lobby-update', sanitizeLobby(result.lobby));
         }

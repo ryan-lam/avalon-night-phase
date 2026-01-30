@@ -28,9 +28,18 @@ class GameManager {
     joinLobby(code, socketId, playerName) {
         const lobby = this.lobbies[code];
         if (!lobby) throw new Error('Lobby not found');
+
+        // Check if player exists (Rejoin logic)
+        const existingPlayer = lobby.players.find(p => p.name === playerName);
+        if (existingPlayer) {
+            existingPlayer.socketId = socketId;
+            existingPlayer.connected = true;
+            return lobby;
+        }
+
         if (lobby.state !== 'waiting') throw new Error('Game already started');
 
-        // Prevent duplicate names? For now, allow it but maybe append #?
+        // Prevent duplicate names check is handled by reuse logic above
         this.addPlayer(code, socketId, playerName, false);
         return lobby;
     }
@@ -48,25 +57,32 @@ class GameManager {
         lobby.players.push(player);
     }
 
-    removePlayer(socketId) {
+    disconnectPlayer(socketId) {
         // Find lobby
         for (const code in this.lobbies) {
             const lobby = this.lobbies[code];
-            const pIdx = lobby.players.findIndex(p => p.socketId === socketId);
-            if (pIdx !== -1) {
-                lobby.players.splice(pIdx, 1);
-                // Re-index remaining players
-                lobby.players.forEach((p, i) => p.idx = i);
-
-                // If host left, assign new host or delete
-                if (lobby.players.length === 0) {
-                    delete this.lobbies[code];
-                } else if (lobby.hostId === socketId) {
-                    lobby.players[0].isHost = true;
-                    lobby.hostId = lobby.players[0].socketId;
-                }
+            const player = lobby.players.find(p => p.socketId === socketId);
+            if (player) {
+                player.connected = false;
+                // We DO NOT remove the player from the array, keeping them in the game
                 return { code, lobby };
             }
+        }
+        return null;
+    }
+
+    // New explicit remove for manual leaving if needed, or cleanup
+    kickPlayer(code, playerId) {
+        const lobby = this.lobbies[code];
+        if (!lobby) return null;
+
+        const pIdx = lobby.players.findIndex(p => p.socketId === playerId);
+        if (pIdx !== -1) {
+            const removedPlayer = lobby.players[pIdx];
+            lobby.players.splice(pIdx, 1);
+            // Re-index
+            lobby.players.forEach((p, i) => p.idx = i);
+            return { lobby, removedPlayer };
         }
         return null;
     }

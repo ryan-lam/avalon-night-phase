@@ -13,6 +13,7 @@ export default function Home({ setGameState, setPlayerInfo }) {
         socket.emit('create-lobby', { playerName: name }, (res) => {
             console.log('create-lobby response:', res);
             if (res.success) {
+                localStorage.setItem('avalon_session', JSON.stringify({ name, code: res.code, isHost: true }));
                 setPlayerInfo({ name, isHost: true, socketId: socket.id }); // Optimistic update
                 // The server will emit 'lobby-update' which App.js handles to switch view
             } else {
@@ -25,6 +26,7 @@ export default function Home({ setGameState, setPlayerInfo }) {
         if (!name || !code) return setError('Please enter name and code');
         socket.emit('join-lobby', { code, playerName: name }, (res) => {
             if (res.success) {
+                localStorage.setItem('avalon_session', JSON.stringify({ name, code, isHost: false }));
                 setPlayerInfo({ name, isHost: false, socketId: socket.id });
             } else {
                 setError(res.error);
