@@ -104,6 +104,15 @@ class GameManager {
         if (pIdx !== -1) {
             const removedPlayer = lobby.players[pIdx];
             lobby.players.splice(pIdx, 1);
+
+            // Host Transfer Logic
+            if (removedPlayer.isHost && lobby.players.length > 0) {
+                const newHost = lobby.players[0];
+                newHost.isHost = true;
+                lobby.hostId = newHost.socketId;
+                console.log(`Host transferred to ${newHost.name} (${newHost.socketId})`);
+            }
+
             // Re-index
             lobby.players.forEach((p, i) => p.idx = i);
             return { lobby, removedPlayer };

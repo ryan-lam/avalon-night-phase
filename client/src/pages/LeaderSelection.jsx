@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { socket } from '../socket';
 import { Crown } from 'lucide-react';
 
-export default function LeaderSelection({ lobbyState, playerInfo }) {
+export default function LeaderSelection({ lobbyState, playerInfo, isHost }) {
     const [selectedLeader2, setSelectedLeader2] = useState(null);
 
-    const isHost = playerInfo?.isHost;
+    // Fallback if isHost not passed (but App.js passes it now)
+    const amIHost = isHost !== undefined ? isHost : playerInfo?.isHost;
     const leader1Id = lobbyState.leader1;
     const leader1 = lobbyState.players.find(p => p.socketId === leader1Id);
 
@@ -34,7 +35,7 @@ export default function LeaderSelection({ lobbyState, playerInfo }) {
             </div>
 
             {/* Selection UI */}
-            {isHost ? (
+            {amIHost ? (
                 <div className="space-y-4">
                     <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
                         <p className="text-blue-200 font-medium">

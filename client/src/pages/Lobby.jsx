@@ -112,20 +112,18 @@ export default function Lobby({ lobbyState, isHost }) {
         <div className="flex flex-col min-h-screen px-4 py-8 max-w-lg mx-auto">
             {/* Header */}
             <div className="text-center mb-8 relative">
-                {!isHost && (
-                    <button
-                        onClick={() => {
-                            if (window.confirm("Are you sure you want to leave?")) {
-                                socket.emit('leave-game', { code: lobbyState.code });
-                                localStorage.removeItem('avalon_session');
-                                window.location.reload();
-                            }
-                        }}
-                        className="absolute left-0 top-1 text-xs text-red-400 hover:text-red-300 border border-red-900/50 bg-red-900/20 px-2 py-1 rounded"
-                    >
-                        LEAVE
-                    </button>
-                )}
+                <button
+                    onClick={() => {
+                        if (window.confirm("Are you sure you want to leave?")) {
+                            socket.emit('leave-game', { code: lobbyState.code });
+                            localStorage.removeItem('avalon_session');
+                            window.location.reload();
+                        }
+                    }}
+                    className="absolute left-0 top-1 text-xs text-red-400 hover:text-red-300 border border-red-900/50 bg-red-900/20 px-2 py-1 rounded"
+                >
+                    LEAVE
+                </button>
                 <h2 className="text-gray-400 text-sm tracking-widest uppercase mb-2">LOBBY CODE</h2>
                 <div className="flex items-center justify-center space-x-3" onClick={copyCode}>
                     <span className="text-6xl font-bold text-avalon-gold tracking-widest">{lobbyState.code}</span>

@@ -173,7 +173,9 @@ io.on('connection', (socket) => {
 
 function logLobbyPlayers(code, lobby) {
     if (!lobby) return;
-    const names = lobby.players.map(p => `${p.name} (${p.socketId})`).join(', ');
+    // Sort copy of players: Host first
+    const sortedPlayers = [...lobby.players].sort((a, b) => (b.isHost ? 1 : 0) - (a.isHost ? 1 : 0));
+    const names = sortedPlayers.map(p => `${p.name} (${p.socketId})`).join(', ');
     console.log(`[Lobby ${code}] Players: [${names}]`);
 }
 

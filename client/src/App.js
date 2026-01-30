@@ -83,11 +83,14 @@ function App() {
   // View Routing Logic
   let view = <Home setPlayerInfo={setPlayerInfo} />;
 
+  // Dynamic host check: am I the current host?
+  const isMeHost = lobbyState && socket.id && lobbyState.hostId === socket.id;
+
   if (lobbyState) {
     if (lobbyState.state === 'waiting') {
-      view = <Lobby lobbyState={lobbyState} isHost={playerInfo?.isHost} />;
+      view = <Lobby lobbyState={lobbyState} isHost={isMeHost} />;
     } else if (lobbyState.state === 'leader_selection') {
-      view = <LeaderSelection lobbyState={lobbyState} playerInfo={playerInfo} />;
+      view = <LeaderSelection lobbyState={lobbyState} playerInfo={playerInfo} isHost={isMeHost} />;
     } else if (lobbyState.state === 'night_phase') {
       view = <Game lobbyState={lobbyState} knowledge={knowledge} />;
     }
