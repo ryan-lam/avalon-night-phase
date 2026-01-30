@@ -147,6 +147,16 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('leave-game', ({ code }) => {
+        const result = gameManager.kickPlayer(code, socket.id);
+        if (result) {
+            // We don't need to emit 'kicked' to self, client handles its own cleanup
+            // Just socket leave and update others
+            socket.leave(code);
+            io.to(code).emit('lobby-update', sanitizeLobby(result.lobby));
+        }
+    });
+
     socket.on('disconnect', () => {
         const result = gameManager.disconnectPlayer(socket.id);
         if (result) {
