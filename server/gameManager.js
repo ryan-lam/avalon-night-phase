@@ -3,6 +3,22 @@ const roleRegistry = require('./roles/RoleRegistry');
 class GameManager {
     constructor() {
         this.lobbies = {}; // code -> lobby object
+
+        // Cleanup interval: check every hour
+        setInterval(() => this.cleanupLobbies(), 60 * 60 * 1000);
+    }
+
+    cleanupLobbies() {
+        const now = Date.now();
+        const EXPIRATION_TIME = 6 * 60 * 60 * 1000; // 6 hours
+
+        for (const code in this.lobbies) {
+            const lobby = this.lobbies[code];
+            if (now - lobby.createdAt > EXPIRATION_TIME) {
+                console.log(`Lobby ${code} expired and deleted.`);
+                delete this.lobbies[code];
+            }
+        }
     }
 
     createLobby(hostSocketId, hostName) {
@@ -19,7 +35,9 @@ class GameManager {
                 }
             },
             state: 'waiting', // waiting, night_phase, ready_check (or just part of night_phase)
-            readyPlayers: new Set()
+            state: 'waiting', // waiting, night_phase, ready_check (or just part of night_phase)
+            readyPlayers: new Set(),
+            createdAt: Date.now()
         };
         this.addPlayer(code, hostSocketId, hostName, true);
         return code;

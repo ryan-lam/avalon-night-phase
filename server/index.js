@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const gameManager = require('./gameManager');
@@ -8,10 +9,18 @@ const roleRegistry = require('./roles/RoleRegistry');
 const app = express();
 app.use(cors());
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all for dev
+        origin: "*", // Allow all for dev/prod
         methods: ["GET", "POST"]
     }
 });
@@ -159,7 +168,7 @@ function sanitizeLobby(lobby) {
     };
 }
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
