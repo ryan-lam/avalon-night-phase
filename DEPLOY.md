@@ -44,8 +44,8 @@ If you want to host everything in one place for free.
 1.  Go to **Render.com** -> New **Web Service**.
 2.  **Settings**:
     *   **Root Directory**: `.` (Leave empty)
-    *   **Build Command**: `npm run build`
-    *   **Start Command**: `npm start`
+    *   **Build Command**: `npm run install-all; npm run build`
+    *   **Start Command**: `npm run start`
 3.  Create.
 
 Render will host both the site and the server.
