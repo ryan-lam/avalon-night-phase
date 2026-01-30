@@ -44,6 +44,7 @@ io.on('connection', (socket) => {
             // Fix: Emit lobby update so client switches view
             const lobby = gameManager.lobbies[code];
             io.to(code).emit('lobby-update', sanitizeLobby(lobby));
+            logLobbyPlayers(code, lobby);
 
             callback({ success: true, code });
         } catch (e) {
@@ -57,6 +58,7 @@ io.on('connection', (socket) => {
             const lobby = gameManager.joinLobby(code.toUpperCase(), socket.id, playerName);
             socket.join(lobby.code);
             io.to(lobby.code).emit('lobby-update', sanitizeLobby(lobby));
+            logLobbyPlayers(lobby.code, lobby);
 
             // If game is in progress, send private knowledge to the rejoining player
             if (lobby.state === 'night_phase') {
@@ -105,6 +107,7 @@ io.on('connection', (socket) => {
 
             io.to(code).emit('lobby-update', sanitizeLobby(lobby));
         } catch (e) {
+            console.error('Error starting game:', e);
             if (callback) callback({ success: false, error: e.message });
         }
     });
@@ -143,6 +146,7 @@ io.on('connection', (socket) => {
 
                 // Update everyone else
                 io.to(code).emit('lobby-update', sanitizeLobby(result.lobby));
+                logLobbyPlayers(code, result.lobby);
             }
         }
     });
@@ -154,6 +158,7 @@ io.on('connection', (socket) => {
             // Just socket leave and update others
             socket.leave(code);
             io.to(code).emit('lobby-update', sanitizeLobby(result.lobby));
+            logLobbyPlayers(code, result.lobby);
         }
     });
 
@@ -161,9 +166,16 @@ io.on('connection', (socket) => {
         const result = gameManager.disconnectPlayer(socket.id);
         if (result) {
             io.to(result.code).emit('lobby-update', sanitizeLobby(result.lobby));
+            logLobbyPlayers(result.code, result.lobby);
         }
     });
 });
+
+function logLobbyPlayers(code, lobby) {
+    if (!lobby) return;
+    const names = lobby.players.map(p => `${p.name} (${p.socketId})`).join(', ');
+    console.log(`[Lobby ${code}] Players: [${names}]`);
+}
 
 function sanitizeLobby(lobby) {
     // Remove secret info from public lobby state

@@ -49,8 +49,8 @@ export default function Game({ lobbyState, knowledge }) {
                     </div>
                     <h2 className="text-3xl font-bold">Everyone is Ready!</h2>
                     <p className="text-gray-300">Proceed to the first quest.</p>
-                    {/* Host controls to reset would go here, or handled physically */}
-                    {knowledge && ( // Just verification for the user
+                    {/* Host controls to reset */}
+                    {lobbyState.hostId === socket.id && (
                         <button onClick={resetGame} className="mt-8 px-6 py-2 border border-gray-600 rounded text-gray-400 hover:text-white">
                             Reset Game
                         </button>
