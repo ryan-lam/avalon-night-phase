@@ -128,11 +128,13 @@ class GameManager {
     }
 
     // rolesList: array of role names strings e.g. ['Merlin', 'Assassin', 'Servant', ...]
-    startGame(code, rolesList) {
+    startGame(code, rolesList, genericCountsOverride) {
         const lobby = this.lobbies[code];
         if (!lobby) throw new Error('Lobby not found');
         if (rolesList.length !== lobby.players.length) {
-            throw new Error(`Player count (${lobby.players.length}) does not match role count (${rolesList.length})`);
+            // Note: This check is premature because rolesList doesn't include generics yet.
+            // But if ONLY generics are used, rolesList is empty. 
+            // We should rely on the final check after adding generics.
         }
 
         // 1. Shuffle players and/or roles
@@ -141,12 +143,21 @@ class GameManager {
         // Create full list including generics
         let allRoles = [...rolesList];
 
-        // Add generics based on counts
-        const config = lobby.config;
-        if (config && config.genericCounts) {
-            for (let i = 0; i < (config.genericCounts['Minion'] || 0); i++) allRoles.push('Minion');
-            for (let i = 0; i < (config.genericCounts['Servant'] || 0); i++) allRoles.push('Servant');
+        // Add generics based on override or config
+        const finalGenericCounts = genericCountsOverride || (lobby.config && lobby.config.genericCounts) || {};
+
+        console.log(`[startGame] Using Generic Counts:`, finalGenericCounts);
+
+        const minionCount = finalGenericCounts['Minion'] || 0;
+        const servantCount = finalGenericCounts['Servant'] || 0;
+
+        if (minionCount > 0 || servantCount > 0) {
+            console.log(`[startGame] Adding ${minionCount} Minions and ${servantCount} Servants`);
+            for (let i = 0; i < minionCount; i++) allRoles.push('Minion');
+            for (let i = 0; i < servantCount; i++) allRoles.push('Servant');
         }
+
+        console.log(`[startGame] Final Roles List (${allRoles.length}):`, allRoles);
 
         if (allRoles.length !== lobby.players.length) {
             throw new Error(`Player count (${lobby.players.length}) does not match role count (${allRoles.length})`);

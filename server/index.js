@@ -95,9 +95,9 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('start-game', ({ code, roles }, callback) => {
+    socket.on('start-game', ({ code, roles, genericCounts }, callback) => {
         try {
-            const lobby = gameManager.startGame(code, roles);
+            const lobby = gameManager.startGame(code, roles, genericCounts);
 
             // Send individual knowledge to each player
             lobby.players.forEach(p => {

@@ -84,7 +84,11 @@ export default function Lobby({ lobbyState, isHost }) {
         // Wait, server `startGame` receives `roles`. If I look at server/index.js: `gameManager.startGame(code, roles);`
         // And gameManager.js: `let allRoles = [...rolesList];` then adds generics from config.
         // So here we pass just `selectedRoles`.
-        socket.emit('start-game', { code: lobbyState.code, roles: selectedRoles }, (res) => {
+        socket.emit('start-game', {
+            code: lobbyState.code,
+            roles: selectedRoles,
+            genericCounts: genericCounts // Explicitly send counts
+        }, (res) => {
             if (res && !res.success) {
                 alert(res.error);
             }
